@@ -63,6 +63,11 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 .send{margin-top:20px;width:100%;background:#1a8a43;color:#fff;border:0;border-radius:10px;padding:16px;font-weight:600;font-size:17px;cursor:pointer}
 .close{float:right;background:none;border:0;font-size:15px;font-weight:600;text-decoration:underline;cursor:pointer}
 .err{color:var(--red);font-size:14px;margin-top:10px;font-weight:600}
+.qr img{display:block;margin:14px auto;width:min(260px,72vw);height:auto;background:#fff;padding:8px;border-radius:8px;image-rendering:pixelated}
+.pixcode{width:100%;font:12px/1.35 ui-monospace,monospace;padding:10px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff;resize:none}
+.copy{margin-top:8px;width:100%;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:13px;font-weight:600;cursor:pointer}
+.back{display:block;margin:16px auto 0;background:none;border:0;font-weight:600;text-decoration:underline;cursor:pointer}
+.hint{color:var(--muted);font-size:14.5px;margin-top:8px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -90,21 +95,36 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
     <button class="close" id="close">Fechar</button>
     <h2>Seu pedido</h2>
     <div id="lines"></div>
+    <div id="step1">
     <label for="nome">Seu nome</label>
     <input type="text" id="nome" autocomplete="name">
     <label>Pagamento</label>
-    <p style="padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff">Pix. Enviamos a chave pelo WhatsApp quando o pedido for confirmado.</p>
+    <p style="padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff">Pix. Ao tocar em “Gerar Pix”, aparece o QR Code com o valor do pedido.</p>
     <label for="obs">Observações (sem cebola, ponto da carne, etc.)</label>
     <textarea id="obs" rows="2"></textarea>
     <div class="err" id="err" role="alert"></div>
-    <button class="send" id="send">Enviar pedido pelo WhatsApp</button>
+    <button class="send" id="send">Gerar Pix</button>
+    </div>
+    <div id="step2" style="display:none">
+      <p style="margin-top:6px">Total a pagar: <b id="pixTotal"></b></p>
+      <div class="qr" id="qr"></div>
+      <p class="hint">Está no celular? Toque em “Copiar código Pix” e cole no app do seu banco, na opção Pix Copia e Cola.</p>
+      <label for="pixCode">Pix Copia e Cola</label>
+      <textarea class="pixcode" id="pixCode" rows="4" readonly></textarea>
+      <button class="copy" id="copy">Copiar código Pix</button>
+      <p class="hint">Depois de pagar, toque no botão abaixo e anexe o comprovante na conversa. O pedido só é preparado depois que a gente confirmar o pagamento.</p>
+      <button class="send" id="sendWa">Já paguei, enviar pedido no WhatsApp</button>
+      <button class="back" id="back">Voltar</button>
+    </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
 /* ===== EDITE AQUI ===== */
 const CONFIG = {
   whatsapp: "5568999242761", // DDI 55 + DDD + número, só dígitos
+  pix: { chave: "", nome: "LANCHONETE DO KANT", cidade: "SUA CIDADE" }, // chave Pix da loja; cidade sem acento, até 15 letras
   endereco: "Rua Exemplo, 123 – Bairro, Cidade",
   // Horário por dia da semana (0 = domingo ... 6 = sábado): [abre, fecha] em horas, ou null se fechado
   horarios: {0:[18,23],1:null,2:[18,23],3:[18,23],4:[18,23],5:[18,23],6:[18,23]}
@@ -193,27 +213,63 @@ document.addEventListener("click", e=>{
   save(); renderCtl();
   if (!Object.keys(cart).length) $("#sheet").classList.remove("open");
 });
-$("#bar").onclick = ()=> $("#sheet").classList.add("open");
+$("#bar").onclick = ()=>{ passo1(); $("#sheet").classList.add("open"); };
 $("#close").onclick = ()=> $("#sheet").classList.remove("open");
 $("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") $("#sheet").classList.remove("open"); });
+
+/* ===== PIX (BR Code estático) ===== */
+const semAcento = (t,n) => t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9 ]/g,"").toUpperCase().slice(0,n);
+const tlv = (id,v) => id + String(v.length).padStart(2,"0") + v;
+function crc16(str){
+  let c = 0xFFFF;
+  for (let i=0;i<str.length;i++){ c ^= str.charCodeAt(i)<<8; for (let k=0;k<8;k++) c = (c&0x8000) ? ((c<<1)^0x1021) : (c<<1); c &= 0xFFFF; }
+  return c.toString(16).toUpperCase().padStart(4,"0");
+}
+function pixPayload(chave, nome, cidade, valor, txid){
+  const conta = tlv("00","br.gov.bcb.pix") + tlv("01",chave);
+  const p = tlv("00","01") + tlv("26",conta) + tlv("52","0000") + tlv("53","986") + tlv("54",valor.toFixed(2))
+          + tlv("58","BR") + tlv("59",nome) + tlv("60",cidade) + tlv("62",tlv("05",txid)) + "6304";
+  return p + crc16(p);
+}
+let pendente = null;
+function passo1(){ $("#step2").style.display="none"; $("#step1").style.display="block"; }
 
 $("#send").onclick = ()=>{
   const nome = $("#nome").value.trim(), err = $("#err");
   if (!nome) return err.textContent = "Informe seu nome.";
+  if (!CONFIG.pix.chave.trim()) return err.textContent = "A chave Pix da loja ainda não foi configurada.";
   if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="5500000000000") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
   err.textContent = "";
   const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0);
-  const msg = [
+  const txid = "KANT" + Date.now().toString(36).toUpperCase().slice(-8);
+  const code = pixPayload(CONFIG.pix.chave.trim(), semAcento(CONFIG.pix.nome,25), semAcento(CONFIG.pix.cidade,15), sub, txid);
+  pendente = [
     "*Pedido – Lanchonete do Kant*", "",
     ...todos.filter(i=>cart[i.id]).map(i=>`${cart[i.id]}x ${i.nome} – ${brl(cart[i.id]*i.preco)}`), "",
     `*Total: ${brl(sub)}*`, "",
-    `Nome: ${nome}`, "Tipo: Retirada", "Pagamento: Pix",
-    $("#obs").value.trim()?`Obs: ${$("#obs").value.trim()}`:""
+    `Nome: ${nome}`, "Tipo: Retirada", `Pagamento: Pix (código ${txid})`,
+    $("#obs").value.trim()?`Obs: ${$("#obs").value.trim()}`:"",
+    "", "Segue o comprovante do Pix."
   ].filter((l,i,a)=>!(l==="" && a[i-1]==="")).join("\n");
-  window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg), "_blank");
+  $("#pixTotal").textContent = brl(sub);
+  $("#pixCode").value = code;
+  try { const qr = qrcode(0,"M"); qr.addData(code); qr.make(); $("#qr").innerHTML = qr.createImgTag(5,4,"QR Code Pix"); }
+  catch(e){ $("#qr").innerHTML = ""; }
+  $("#step1").style.display="none"; $("#step2").style.display="block";
+  document.querySelector(".panel").scrollTop = 0;
+};
+$("#copy").onclick = async ()=>{
+  const t = $("#pixCode"), b = $("#copy");
+  try { await navigator.clipboard.writeText(t.value); }
+  catch(e){ t.select(); document.execCommand("copy"); }
+  b.textContent = "Código copiado!"; setTimeout(()=>b.textContent="Copiar código Pix", 2000);
+};
+$("#back").onclick = passo1;
+$("#sendWa").onclick = ()=>{
+  window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(pendente), "_blank");
   cart = {}; save(); renderCtl();
   $("#nome").value = ""; $("#obs").value = "";
-  $("#sheet").classList.remove("open");
+  passo1(); $("#sheet").classList.remove("open");
 };
 
 /* aba ativa ao rolar */
