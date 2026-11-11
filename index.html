@@ -211,6 +211,9 @@ $("#send").onclick = ()=>{
     $("#obs").value.trim()?`Obs: ${$("#obs").value.trim()}`:""
   ].filter((l,i,a)=>!(l==="" && a[i-1]==="")).join("\n");
   window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg), "_blank");
+  cart = {}; save(); renderCtl();
+  $("#nome").value = ""; $("#obs").value = "";
+  $("#sheet").classList.remove("open");
 };
 
 /* aba ativa ao rolar */
