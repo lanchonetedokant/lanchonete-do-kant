@@ -1,10 +1,11 @@
+<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#d3261b">
 <title>Lanchonete do Kant – Pizza, hambúrguer e doces</title>
-<meta name="description" content="Peça pizza, hambúrguer artesanal e doces da Lanchonete do Kant. Entrega ou retirada.">
+<meta name="description" content="Peça pizza, hambúrguer artesanal e doces da Lanchonete do Kant. Retirada no local.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -70,7 +71,7 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 <section class="hero">
   <span class="status" id="status"></span>
   <h1>Pizza quente, hambúrguer de verdade, doce pra fechar.</h1>
-  <p>Escolha o que quiser, monte o pedido aqui e envie direto pelo WhatsApp.</p>
+  <p>Escolha o que quiser, monte o pedido aqui e envie direto pelo WhatsApp. Retirada no local, pagamento por Pix.</p>
   <a class="go" href="#pizzas">Ver cardápio</a>
 </section>
 <nav class="tabs" id="tabs"></nav>
@@ -89,19 +90,11 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
     <button class="close" id="close">Fechar</button>
     <h2>Seu pedido</h2>
     <div id="lines"></div>
-    <label>Como você quer receber?</label>
-    <div class="opts">
-      <label><input type="radio" name="tipo" value="Entrega" checked><span>Entrega</span></label>
-    </div>
     <label for="nome">Seu nome</label>
     <input type="text" id="nome" autocomplete="name">
-    <div id="endBox">
-      <label for="ender">Endereço de entrega (rua, número, bairro)</label>
-      <input type="text" id="ender" autocomplete="street-address">
-    </div>
-    <label for="pag">Pagamento</label>
-    <select id="pag"><option>Pix</option></select>
-    <label for="obs">Observações (troco, sem cebola, etc.)</label>
+    <label>Pagamento</label>
+    <p style="padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff">Pix. Enviamos a chave pelo WhatsApp quando o pedido for confirmado.</p>
+    <label for="obs">Observações (sem cebola, ponto da carne, etc.)</label>
     <textarea id="obs" rows="2"></textarea>
     <div class="err" id="err" role="alert"></div>
     <button class="send" id="send">Enviar pedido pelo WhatsApp</button>
@@ -111,17 +104,16 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 <script>
 /* ===== EDITE AQUI ===== */
 const CONFIG = {
-  whatsapp: "5568999242761", // DDI 55 + DDD + número, só dígitos. Ex.: 5511999998888
-  taxaEntrega: 6,
+  whatsapp: "5568999242761", // DDI 55 + DDD + número, só dígitos
   endereco: "Rua Exemplo, 123 – Bairro, Cidade",
   // Horário por dia da semana (0 = domingo ... 6 = sábado): [abre, fecha] em horas, ou null se fechado
   horarios: {0:[18,23],1:null,2:[18,23],3:[18,23],4:[18,23],5:[18,23],6:[18,23]}
 };
 const CARDAPIO = [
   {id:"pizzas", nome:"Pizzas", desc:"Tamanho grande, 8 fatias.", itens:[
-    {id:"p1", nome:"Mussarela", desc:"Molho de tomate, mussarela e orégano.", preco:49,90},
-    {id:"p2", nome:"Calabresa", desc:"Calabresa fatiada, cebola e mussarela.", preco:49,90},
-    {id:"p3", nome:"Frango com catupiry", desc:"Frango desfiado e catupiry.", preco:49,90}
+    {id:"p1", nome:"Mussarela", desc:"Molho de tomate, mussarela e orégano.", preco:42},
+    {id:"p2", nome:"Calabresa", desc:"Calabresa fatiada, cebola e mussarela.", preco:46},
+    {id:"p3", nome:"Frango com catupiry", desc:"Frango desfiado e catupiry.", preco:48}
   ]},
   {id:"hamburgueres", nome:"Hambúrgueres", desc:"Pão de padaria, carne de 150 g.", itens:[
     {id:"h1", nome:"Clássico", desc:"Carne, queijo, alface, tomate e maionese da casa.", preco:28},
@@ -185,17 +177,11 @@ function renderCtl(){
   renderSheet();
 }
 
-function tipo(){ return document.querySelector('input[name=tipo]:checked').value; }
-
 function renderSheet(){
   const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0);
-  const ent = tipo()==="Entrega";
-  const taxa = ent && sub>0 ? CONFIG.taxaEntrega : 0;
   $("#lines").innerHTML =
     todos.filter(i=>cart[i.id]).map(i=>`<div class="row"><span>${cart[i.id]}x ${i.nome}</span><span>${brl(cart[i.id]*i.preco)}</span></div>`).join("")
-    + (ent?`<div class="row"><span>Taxa de entrega</span><span>${brl(taxa)}</span></div>`:"")
-    + `<div class="row tot"><span>Total</span><span>${brl(sub+taxa)}</span></div>`;
-  $("#endBox").style.display = ent?"block":"none";
+    + `<div class="row tot"><span>Total</span><span>${brl(sub)}</span></div>`;
 }
 
 document.addEventListener("click", e=>{
@@ -210,20 +196,18 @@ document.addEventListener("click", e=>{
 $("#bar").onclick = ()=> $("#sheet").classList.add("open");
 $("#close").onclick = ()=> $("#sheet").classList.remove("open");
 $("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") $("#sheet").classList.remove("open"); });
-document.querySelectorAll("input[name=tipo]").forEach(r=>r.onchange=renderSheet);
 
 $("#send").onclick = ()=>{
-  const nome = $("#nome").value.trim(), ender = $("#ender").value.trim(), ent = tipo()==="Entrega", err = $("#err");
+  const nome = $("#nome").value.trim(), err = $("#err");
   if (!nome) return err.textContent = "Informe seu nome.";
-  if (ent && !ender) return err.textContent = "Informe o endereço de entrega.";
-  if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="68999242761") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
+  if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="5500000000000") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
   err.textContent = "";
-  const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0), taxa = ent?CONFIG.taxaEntrega:0;
+  const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0);
   const msg = [
     "*Pedido – Lanchonete do Kant*", "",
     ...todos.filter(i=>cart[i.id]).map(i=>`${cart[i.id]}x ${i.nome} – ${brl(cart[i.id]*i.preco)}`), "",
-    ent?`Taxa de entrega: ${brl(taxa)}`:"", `*Total: ${brl(sub+taxa)}*`, "",
-    `Nome: ${nome}`, `Tipo: ${tipo()}`, ent?`Endereço: ${ender}`:"", `Pagamento: ${$("#pag").value}`,
+    `*Total: ${brl(sub)}*`, "",
+    `Nome: ${nome}`, "Tipo: Retirada", "Pagamento: Pix",
     $("#obs").value.trim()?`Obs: ${$("#obs").value.trim()}`:""
   ].filter((l,i,a)=>!(l==="" && a[i-1]==="")).join("\n");
   window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg), "_blank");
@@ -236,5 +220,4 @@ status(); renderMenu(); renderCtl();
 document.querySelectorAll(".cat").forEach(s=>obs.observe(s));
 </script>
 </body>
-  </html>
-  
+</html>
