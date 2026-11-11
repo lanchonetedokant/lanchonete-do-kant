@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#d3261b">
+<title>Lanchonete do Kant – Pizza, hambúrguer e doces</title>
+<meta name="description" content="Peça pizza, hambúrguer artesanal e doces da Lanchonete do Kant. Entrega ou retirada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1b1f;--paper:#fafaf8;--red:#d3261b;--sun:#ffc233;--line:#e3e1da;--muted:#66645c;--slab:"Alfa Slab One",Georgia,serif;--sans:"Work Sans",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{font:16px/1.5 var(--sans);color:var(--ink);background:var(--paper);padding-bottom:90px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.top{background:var(--red);color:#fff;padding:14px 20px 0}
+.brand{font:22px/1 var(--slab);letter-spacing:.2px}
+.hero{background:var(--red);color:#fff;padding:28px 20px 40px}
+.hero h1{font:clamp(34px,9vw,60px)/1.02 var(--slab);max-width:14ch;margin-bottom:18px}
+.hero p{max-width:44ch;font-size:17px}
+.status{display:inline-block;background:var(--sun);color:var(--ink);font-weight:600;padding:6px 12px;border-radius:99px;font-size:14px;margin-bottom:16px}
+.status.off{background:#fff}
+.go{display:inline-block;margin-top:20px;background:var(--ink);color:#fff;text-decoration:none;padding:13px 22px;border-radius:8px;font-weight:600}
+.tabs{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:10px 14px;overflow-x:auto}
+.tabs a{flex:none;text-decoration:none;color:var(--ink);padding:8px 16px;border-radius:99px;font-weight:600;font-size:15px}
+.tabs a.on{background:var(--ink);color:#fff}
+main{max-width:720px;margin:0 auto;padding:0 20px}
+.cat{padding-top:34px}
+.cat h2{font:28px/1.1 var(--slab)}
+.cat>p{color:var(--muted);margin:6px 0 10px}
+.item{display:flex;gap:14px;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.item img{width:84px;height:84px;object-fit:cover;border-radius:6px;flex:none}
+.item .t{flex:1}
+.item h3{font-size:17px;font-weight:600}
+.item .d{color:var(--muted);font-size:14.5px;margin-top:2px}
+.item .p{font-weight:600;margin-top:6px}
+.add{background:var(--red);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;min-width:92px}
+.step{display:flex;align-items:center;border:2px solid var(--red);border-radius:8px;overflow:hidden}
+.step button{background:none;border:0;width:38px;height:38px;font-size:20px;color:var(--red);cursor:pointer}
+.step b{min-width:26px;text-align:center}
+footer{max-width:720px;margin:50px auto 0;padding:26px 20px;border-top:2px solid var(--ink);font-size:15px}
+footer h4{font:18px var(--slab);margin-bottom:8px}
+footer li{list-style:none;display:flex;justify-content:space-between;max-width:260px}
+.bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:8;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:16px 18px;display:none;justify-content:space-between;font-weight:600;cursor:pointer;width:calc(100% - 24px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.bar.show{display:flex}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none}
+.sheet.open{display:block}
+.panel{position:absolute;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;background:var(--paper);border-radius:16px 16px 0 0;padding:20px;max-width:720px;margin:0 auto}
+.panel h2{font:24px var(--slab);margin-bottom:10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tot{font-weight:600;font-size:18px;border:0;padding-top:12px}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 5px}
+input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff}
+.opts{display:flex;gap:10px}
+.opts label{flex:1;margin:0;font-weight:500}
+.opts span{display:block;text-align:center;padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;cursor:pointer;background:#fff}
+.opts input{position:absolute;opacity:0}
+.opts input:checked+span{background:var(--ink);color:#fff;border-color:var(--ink)}
+.opts input:focus-visible+span{outline:3px solid var(--sun);outline-offset:2px}
+.send{margin-top:20px;width:100%;background:#1a8a43;color:#fff;border:0;border-radius:10px;padding:16px;font-weight:600;font-size:17px;cursor:pointer}
+.close{float:right;background:none;border:0;font-size:15px;font-weight:600;text-decoration:underline;cursor:pointer}
+.err{color:var(--red);font-size:14px;margin-top:10px;font-weight:600}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">Lanchonete do Kant</div></header>
+<section class="hero">
+  <span class="status" id="status"></span>
+  <h1>Pizza quente, hambúrguer de verdade, doce pra fechar.</h1>
+  <p>Escolha o que quiser, monte o pedido aqui e envie direto pelo WhatsApp. A gente entrega ou você retira.</p>
+  <a class="go" href="#pizzas">Ver cardápio</a>
+</section>
+<nav class="tabs" id="tabs"></nav>
+<main id="menu"></main>
+<footer>
+  <h4>Onde estamos</h4>
+  <p id="end" style="margin-bottom:14px"></p>
+  <h4>Horário</h4>
+  <ul id="hor"></ul>
+</footer>
+
+<button class="bar" id="bar" aria-label="Abrir pedido"><span id="barQ"></span><span id="barT"></span></button>
+
+<div class="sheet" id="sheet">
+  <div class="panel" role="dialog" aria-modal="true" aria-label="Seu pedido">
+    <button class="close" id="close">Fechar</button>
+    <h2>Seu pedido</h2>
+    <div id="lines"></div>
+    <label>Como você quer receber?</label>
+    <div class="opts">
+      <label><input type="radio" name="tipo" value="Entrega" checked><span>Entrega</span></label>
+      <label><input type="radio" name="tipo" value="Retirada"><span>Retirada</span></label>
+    </div>
+    <label for="nome">Seu nome</label>
+    <input type="text" id="nome" autocomplete="name">
+    <div id="endBox">
+      <label for="ender">Endereço de entrega (rua, número, bairro)</label>
+      <input type="text" id="ender" autocomplete="street-address">
+    </div>
+    <label for="pag">Pagamento</label>
+    <select id="pag"><option>Pix</option><option>Cartão (na entrega ou retirada)</option><option>Dinheiro</option></select>
+    <label for="obs">Observações (troco, sem cebola, etc.)</label>
+    <textarea id="obs" rows="2"></textarea>
+    <div class="err" id="err" role="alert"></div>
+    <button class="send" id="send">Enviar pedido pelo WhatsApp</button>
+  </div>
+</div>
+
+<script>
+/* ===== EDITE AQUI ===== */
+const CONFIG = {
+  whatsapp: "5500000000000", // DDI 55 + DDD + número, só dígitos. Ex.: 5511999998888
+  taxaEntrega: 6,
+  endereco: "Rua Exemplo, 123 – Bairro, Cidade",
+  // Horário por dia da semana (0 = domingo ... 6 = sábado): [abre, fecha] em horas, ou null se fechado
+  horarios: {0:[18,23],1:null,2:[18,23],3:[18,23],4:[18,23],5:[18,23],6:[18,23]}
+};
+const CARDAPIO = [
+  {id:"pizzas", nome:"Pizzas", desc:"Tamanho grande, 8 fatias.", itens:[
+    {id:"p1", nome:"Mussarela", desc:"Molho de tomate, mussarela e orégano.", preco:42},
+    {id:"p2", nome:"Calabresa", desc:"Calabresa fatiada, cebola e mussarela.", preco:46},
+    {id:"p3", nome:"Frango com catupiry", desc:"Frango desfiado e catupiry.", preco:48}
+  ]},
+  {id:"hamburgueres", nome:"Hambúrgueres", desc:"Pão de padaria, carne de 150 g.", itens:[
+    {id:"h1", nome:"Clássico", desc:"Carne, queijo, alface, tomate e maionese da casa.", preco:28},
+    {id:"h2", nome:"Cheddar e bacon", desc:"Carne, cheddar cremoso e bacon crocante.", preco:34},
+    {id:"h3", nome:"Duplo", desc:"Duas carnes, queijo duplo e cebola caramelizada.", preco:38}
+  ]},
+  {id:"doces", nome:"Doces", desc:"Feitos no dia.", itens:[
+    {id:"d1", nome:"Brigadeiro", desc:"Unidade.", preco:6},
+    {id:"d2", nome:"Brownie", desc:"Com calda de chocolate.", preco:10},
+    {id:"d3", nome:"Pudim", desc:"Fatia.", preco:12}
+  ]}
+  /* Para colocar foto num item, adicione: foto:"fotos/mussarela.jpg" */
+];
+/* ===== FIM DA EDIÇÃO ===== */
+
+const $ = s => document.querySelector(s);
+const brl = v => v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const dias = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+const todos = CARDAPIO.flatMap(c=>c.itens);
+let cart = {};
+try { cart = JSON.parse(localStorage.getItem("kant-cart")||"{}"); } catch(e){}
+const save = () => { try { localStorage.setItem("kant-cart", JSON.stringify(cart)); } catch(e){} };
+
+function status(){
+  const n = new Date(), h = CONFIG.horarios[n.getDay()], el = $("#status");
+  if (h && n.getHours()>=h[0] && n.getHours()<h[1]) { el.textContent = "Aberto agora até as "+h[1]+"h"; el.className="status"; return; }
+  el.className="status off";
+  if (h && n.getHours()<h[0]) { el.textContent = "Fechado agora. Abrimos hoje às "+h[0]+"h"; return; }
+  for (let i=1;i<=7;i++){ const d=(n.getDay()+i)%7, x=CONFIG.horarios[d];
+    if (x){ el.textContent = "Fechado agora. Abrimos "+(i===1?"amanhã":dias[d].toLowerCase())+" às "+x[0]+"h"; return; } }
+  el.textContent = "Fechado no momento";
+}
+
+function renderMenu(){
+  $("#tabs").innerHTML = CARDAPIO.map(c=>`<a href="#${c.id}" data-t="${c.id}">${c.nome}</a>`).join("");
+  $("#menu").innerHTML = CARDAPIO.map(c=>`
+    <section class="cat" id="${c.id}"><h2>${c.nome}</h2><p>${c.desc}</p>
+    ${c.itens.map(i=>`
+      <div class="item">
+        ${i.foto?`<img src="${i.foto}" alt="${i.nome}" loading="lazy">`:""}
+        <div class="t"><h3>${i.nome}</h3><div class="d">${i.desc}</div><div class="p">${brl(i.preco)}</div></div>
+        <div data-ctl="${i.id}"></div>
+      </div>`).join("")}
+    </section>`).join("");
+  $("#end").textContent = CONFIG.endereco;
+  $("#hor").innerHTML = dias.map((d,i)=>{const h=CONFIG.horarios[i];return `<li><span>${d}</span><span>${h?h[0]+"h às "+h[1]+"h":"Fechado"}</span></li>`}).join("");
+}
+
+function renderCtl(){
+  todos.forEach(i=>{
+    const q = cart[i.id]||0, box = document.querySelector(`[data-ctl="${i.id}"]`);
+    box.innerHTML = q
+      ? `<div class="step"><button data-a="sub" data-id="${i.id}" aria-label="Tirar um ${i.nome}">−</button><b>${q}</b><button data-a="add" data-id="${i.id}" aria-label="Colocar mais um ${i.nome}">+</button></div>`
+      : `<button class="add" data-a="add" data-id="${i.id}">Adicionar</button>`;
+  });
+  const qt = Object.values(cart).reduce((a,b)=>a+b,0);
+  const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0);
+  $("#bar").classList.toggle("show", qt>0);
+  $("#barQ").textContent = "Ver pedido ("+qt+(qt===1?" item)":" itens)");
+  $("#barT").textContent = brl(sub);
+  renderSheet();
+}
+
+function tipo(){ return document.querySelector('input[name=tipo]:checked').value; }
+
+function renderSheet(){
+  const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0);
+  const ent = tipo()==="Entrega";
+  const taxa = ent && sub>0 ? CONFIG.taxaEntrega : 0;
+  $("#lines").innerHTML =
+    todos.filter(i=>cart[i.id]).map(i=>`<div class="row"><span>${cart[i.id]}x ${i.nome}</span><span>${brl(cart[i.id]*i.preco)}</span></div>`).join("")
+    + (ent?`<div class="row"><span>Taxa de entrega</span><span>${brl(taxa)}</span></div>`:"")
+    + `<div class="row tot"><span>Total</span><span>${brl(sub+taxa)}</span></div>`;
+  $("#endBox").style.display = ent?"block":"none";
+}
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-a]");
+  if (!b) return;
+  const id = b.dataset.id;
+  cart[id] = Math.max(0,(cart[id]||0)+(b.dataset.a==="add"?1:-1));
+  if (!cart[id]) delete cart[id];
+  save(); renderCtl();
+  if (!Object.keys(cart).length) $("#sheet").classList.remove("open");
+});
+$("#bar").onclick = ()=> $("#sheet").classList.add("open");
+$("#close").onclick = ()=> $("#sheet").classList.remove("open");
+$("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") $("#sheet").classList.remove("open"); });
+document.querySelectorAll("input[name=tipo]").forEach(r=>r.onchange=renderSheet);
+
+$("#send").onclick = ()=>{
+  const nome = $("#nome").value.trim(), ender = $("#ender").value.trim(), ent = tipo()==="Entrega", err = $("#err");
+  if (!nome) return err.textContent = "Informe seu nome.";
+  if (ent && !ender) return err.textContent = "Informe o endereço de entrega.";
+  if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="5500000000000") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
+  err.textContent = "";
+  const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0), taxa = ent?CONFIG.taxaEntrega:0;
+  const msg = [
+    "*Pedido – Lanchonete do Kant*", "",
+    ...todos.filter(i=>cart[i.id]).map(i=>`${cart[i.id]}x ${i.nome} – ${brl(cart[i.id]*i.preco)}`), "",
+    ent?`Taxa de entrega: ${brl(taxa)}`:"", `*Total: ${brl(sub+taxa)}*`, "",
+    `Nome: ${nome}`, `Tipo: ${tipo()}`, ent?`Endereço: ${ender}`:"", `Pagamento: ${$("#pag").value}`,
+    $("#obs").value.trim()?`Obs: ${$("#obs").value.trim()}`:""
+  ].filter((l,i,a)=>!(l==="" && a[i-1]==="")).join("\n");
+  window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg), "_blank");
+};
+
+/* aba ativa ao rolar */
+const obs = new IntersectionObserver(es=>es.forEach(x=>{ if(x.isIntersecting) document.querySelectorAll(".tabs a").forEach(a=>a.classList.toggle("on", a.dataset.t===x.target.id)); }),{rootMargin:"-40% 0px -55% 0px"});
+
+status(); renderMenu(); renderCtl();
+document.querySelectorAll(".cat").forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
