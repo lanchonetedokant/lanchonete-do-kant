@@ -113,7 +113,7 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 <script>
 /* ===== EDITE AQUI ===== */
 const CONFIG = {
-  whatsapp: "5500000000000", // DDI 55 + DDD + número, só dígitos. Ex.: 5511999998888
+  whatsapp: "5568999242761", // DDI 55 + DDD + número, só dígitos. Ex.: 5511999998888
   taxaEntrega: 6,
   endereco: "Rua Exemplo, 123 – Bairro, Cidade",
   // Horário por dia da semana (0 = domingo ... 6 = sábado): [abre, fecha] em horas, ou null se fechado
@@ -218,7 +218,7 @@ $("#send").onclick = ()=>{
   const nome = $("#nome").value.trim(), ender = $("#ender").value.trim(), ent = tipo()==="Entrega", err = $("#err");
   if (!nome) return err.textContent = "Informe seu nome.";
   if (ent && !ender) return err.textContent = "Informe o endereço de entrega.";
-  if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="5500000000000") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
+  if (!/^\d{12,13}$/.test(CONFIG.whatsapp) || CONFIG.whatsapp==="68999242761") return err.textContent = "O número de WhatsApp da loja ainda não foi configurado.";
   err.textContent = "";
   const sub = todos.reduce((a,i)=>a+(cart[i.id]||0)*i.preco,0), taxa = ent?CONFIG.taxaEntrega:0;
   const msg = [
@@ -238,4 +238,4 @@ status(); renderMenu(); renderCtl();
 document.querySelectorAll(".cat").forEach(s=>obs.observe(s));
 </script>
 </body>
-</html>
+  </html>
