@@ -44,7 +44,7 @@ main{max-width:720px;margin:0 auto;padding:0 20px}
 footer{max-width:720px;margin:50px auto 0;padding:26px 20px;border-top:2px solid var(--ink);font-size:15px}
 footer h4{font:18px var(--slab);margin-bottom:8px}
 footer li{list-style:none;display:flex;justify-content:space-between;max-width:260px}
-.bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:8;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:16px 18px;display:none;justify-content:space-between;font-weight:600;cursor:pointer;width:calc(100% - 24px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:8;background:var(--red);color:#fff;border:2px solid #fff;border-radius:12px;padding:16px 18px;display:none;justify-content:space-between;font-size:17px;font-weight:600;cursor:pointer;width:calc(100% - 24px);box-shadow:0 0 0 2px var(--red),0 8px 28px rgba(0,0,0,.45)}
 .bar.show{display:flex}
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none}
 .sheet.open{display:block}
@@ -67,6 +67,7 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 .pixcode{width:100%;font:12px/1.35 ui-monospace,monospace;padding:10px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff;resize:none}
 .copy{margin-top:8px;width:100%;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:13px;font-weight:600;cursor:pointer}
 .back{display:block;margin:16px auto 0;background:none;border:0;font-weight:600;text-decoration:underline;cursor:pointer}
+.okb{background:#1a8a43;color:#fff;padding:14px 20px;font-weight:600}
 .hint{color:var(--muted);font-size:14.5px;margin-top:8px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -76,9 +77,10 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 <section class="hero">
   <span class="status" id="status"></span>
   <h1>Pizza quente, hambúrguer de verdade, doce pra fechar.</h1>
-  <p>Escolha o que quiser, monte o pedido aqui e envie direto pelo WhatsApp. Retirada no local, pagamento por Pix.</p>
+  <p>Escolha o que quiser, monte o pedido aqui e pague no Pix ou no cartão de crédito. Retirada no local.</p>
   <a class="go" href="#pizzas">Ver cardápio</a>
 </section>
+<div class="okb" id="okb" style="display:none"></div>
 <nav class="tabs" id="tabs"></nav>
 <main id="menu"></main>
 <footer>
@@ -98,12 +100,11 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
     <div id="step1">
     <label for="nome">Seu nome</label>
     <input type="text" id="nome" autocomplete="name">
-    <label>Pagamento</label>
-    <p style="padding:12px;border:1.5px solid #bdb9ad;border-radius:8px;background:#fff">Pix. Ao tocar em “Gerar Pix”, aparece o QR Code com o valor do pedido.</p>
-    <label for="obs">Observações (sem cebola, ponto da carne, etc.)</label>
-    <textarea id="obs" rows="2"></textarea>
+    <label>Como você quer pagar?</label>
     <div class="err" id="err" role="alert"></div>
-    <button class="send" id="send">Gerar Pix</button>
+    <button class="send" id="send">Pagar com Pix</button>
+    <button class="send" id="card" style="background:#1d4ed8;margin-top:10px">Pagar com cartão de crédito</button>
+    <p class="hint">O cartão abre a página segura da InfinitePay. Você não digita dados de cartão neste site.</p>
     </div>
     <div id="step2" style="display:none">
       <p style="margin-top:6px">Total a pagar: <b id="pixTotal"></b></p>
@@ -124,7 +125,8 @@ input[type=text],select,textarea{width:100%;padding:12px;border:1.5px solid #bdb
 /* ===== EDITE AQUI ===== */
 const CONFIG = {
   whatsapp: "5568999242761", // DDI 55 + DDD + número, só dígitos
-  pix: { chave: "olokodudu0@gmail.com", nome: "LANCHONETE DO KANT", cidade: "SUA CIDADE" }, // chave Pix da loja; cidade sem acento, até 15 letras
+  pix: { chave: "", nome: "LANCHONETE DO KANT", cidade: "SUA CIDADE" }, // chave Pix da loja; cidade sem acento, até 15 letras
+  infinitepay: { handle: "" }, // sua InfiniteTag, sem o $ (app InfinitePay). Vazio = cartão desativado
   endereco: "Rua Exemplo, 123 – Bairro, Cidade",
   // Horário por dia da semana (0 = domingo ... 6 = sábado): [abre, fecha] em horas, ou null se fechado
   horarios: {0:[18,23],1:null,2:[18,23],3:[18,23],4:[18,23],5:[18,23],6:[18,23]}
@@ -274,6 +276,47 @@ $("#sendWa").onclick = ()=>{
 
 /* aba ativa ao rolar */
 const obs = new IntersectionObserver(es=>es.forEach(x=>{ if(x.isIntersecting) document.querySelectorAll(".tabs a").forEach(a=>a.classList.toggle("on", a.dataset.t===x.target.id)); }),{rootMargin:"-40% 0px -55% 0px"});
+
+/* ===== CARTÃO (InfinitePay – checkout integrado) ===== */
+$("#card").onclick = async ()=>{
+  const nome = $("#nome").value.trim(), err = $("#err"), btn = $("#card");
+  if (!nome) return err.textContent = "Informe seu nome.";
+  if (!CONFIG.infinitepay.handle.trim()) return err.textContent = "O pagamento por cartão ainda não foi configurado.";
+  err.textContent = ""; btn.disabled = true; btn.textContent = "Abrindo pagamento…";
+  const obs = $("#obs").value.trim();
+  const itens = todos.filter(i=>cart[i.id]).map((i,n)=>({
+    quantity: cart[i.id],
+    price: Math.round(i.preco*100),
+    description: (i.nome + (n===0 ? " | Cliente: "+nome+(obs?" | Obs: "+obs:"") : "")).slice(0,120)
+  }));
+  try {
+    const r = await fetch("https://api.infinitepay.io/invoices/public/checkout/links", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        handle: CONFIG.infinitepay.handle.trim().replace(/^\$/,""),
+        order_nsu: "KANT" + Date.now().toString(36).toUpperCase().slice(-8),
+        redirect_url: location.origin + location.pathname,
+        items: itens
+      })
+    });
+    const d = await r.json();
+    if (!d.url) throw new Error("sem link");
+    location.href = d.url;
+  } catch(e){
+    err.textContent = "Não foi possível abrir o pagamento por cartão agora. Tente pelo Pix.";
+    btn.disabled = false; btn.textContent = "Pagar com cartão de crédito";
+  }
+};
+/* volta do checkout: a InfinitePay redireciona para o site com order_nsu na URL */
+(function(){
+  const p = new URLSearchParams(location.search);
+  if (p.get("order_nsu")) {
+    cart = {}; save();
+    const b = $("#okb"); b.style.display = "block";
+    b.textContent = "Obrigado! Recebemos seu pedido. Retire no balcão.";
+    history.replaceState(null, "", location.pathname);
+  }
+})();
 
 status(); renderMenu(); renderCtl();
 document.querySelectorAll(".cat").forEach(s=>obs.observe(s));
